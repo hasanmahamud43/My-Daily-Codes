@@ -1,0 +1,46 @@
+/**
+ * Tutor LMS Course Duration Shortcode
+ * Usage: [tutor_course_duration]
+ */
+function mahamud_tutor_course_duration_shortcode() {
+
+    if ( ! function_exists( 'tutor' ) ) {
+        return '';
+    }
+
+    $course_id = get_the_ID();
+
+    if ( ! $course_id ) {
+        return '';
+    }
+
+    $duration = get_post_meta( $course_id, '_course_duration', true );
+
+    if ( empty( $duration ) ) {
+        return '';
+    }
+
+    // If duration stored as array
+    if ( is_array( $duration ) ) {
+
+        $hours   = isset( $duration['hours'] ) ? intval( $duration['hours'] ) : 0;
+        $minutes = isset( $duration['minutes'] ) ? intval( $duration['minutes'] ) : 0;
+
+        if ( $hours && $minutes ) {
+            return $hours . ':' . str_pad( $minutes, 2, '0', STR_PAD_LEFT ) . ' hr';
+        }
+
+        if ( $hours ) {
+            return $hours . ' hr';
+        }
+
+        if ( $minutes ) {
+            return $minutes . ' min';
+        }
+
+    }
+
+    return '';
+}
+
+add_shortcode( 'tutor_course_duration', 'mahamud_tutor_course_duration_shortcode' );
