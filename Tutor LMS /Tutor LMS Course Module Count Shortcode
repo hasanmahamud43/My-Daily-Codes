@@ -1,0 +1,29 @@
+/**
+ * Tutor LMS Course Module Count Shortcode
+ * Usage: [tutor_course_modules]
+ */
+function mahamud_tutor_course_modules_shortcode() {
+
+    $course_id = get_the_ID();
+
+    if ( ! $course_id ) {
+        return '';
+    }
+
+    $topics = get_posts( array(
+        'post_type'      => 'topics',
+        'posts_per_page' => -1,
+        'post_parent'    => $course_id,
+        'post_status'    => 'publish',
+        'fields'         => 'ids',
+    ) );
+
+    $count = is_array( $topics ) ? count( $topics ) : 0;
+
+    if ( $count < 1 ) {
+        return '';
+    }
+
+    return $count . ' Module';
+}
+add_shortcode( 'tutor_course_modules', 'mahamud_tutor_course_modules_shortcode' );
