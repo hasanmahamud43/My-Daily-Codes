@@ -1,0 +1,136 @@
+/**
+ * Tutor LMS Course Action Button Shortcode
+ * Usage: [tutor_course_action]
+ */
+function mahamud_tutor_course_action_shortcode() {
+
+    if ( ! function_exists( 'tutor' ) || ! function_exists( 'tutor_utils' ) ) {
+        return '';
+    }
+
+    $course_id = get_the_ID();
+    if ( ! $course_id ) {
+        return '';
+    }
+
+    $user_id     = get_current_user_id();
+    $course_url  = get_permalink( $course_id );
+    $cart_url    = 'https://petra-koehne-kurse.de/warenkorb/';
+
+    // Enrolled user -> Start Learning
+    if ( $user_id && tutor_utils()->is_enrolled( $course_id, $user_id ) ) {
+        return '<div class="mahamud-course-action-wrap" data-course-id="' . esc_attr( $course_id ) . '">
+                    <a class="mahamud-course-btn mahamud-btn-main mahamud-btn-learning" href="' . esc_url( $course_url ) . '">Lernen beginnen</a>
+                </div>';
+    }
+
+    // Free course -> Start Learning
+    $price_type = get_post_meta( $course_id, '_tutor_course_price_type', true );
+    if ( 'free' === $price_type ) {
+        return '<div class="mahamud-course-action-wrap" data-course-id="' . esc_attr( $course_id ) . '">
+                    <a class="mahamud-course-btn mahamud-btn-main mahamud-btn-learning" href="' . esc_url( $course_url ) . '">Lernen beginnen</a>
+                </div>';
+    }
+
+    // WooCommerce required for paid courses
+    if ( ! function_exists( 'wc_get_product' ) || ! function_exists( 'WC' ) ) {
+        return '';
+    }
+
+    $product_id = tutor_utils()->get_course_product_id( $course_id );
+    if ( ! $product_id ) {
+        return '';
+    }
+
+    $product = wc_get_product( $product_id );
+    if ( ! $product ) {
+        return '';
+    }
+
+    // Check if product already in cart
+    $in_cart = false;
+    if ( WC()->cart && ! WC()->cart->is_empty() ) {
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( intval( $cart_item['product_id'] ) === intval( $product_id ) ) {
+                $in_cart = true;
+                break;
+            }
+        }
+    }
+
+    // Already in cart -> View Cart
+    if ( $in_cart ) {
+        return '<div class="mahamud-course-action-wrap" data-course-id="' . esc_attr( $course_id ) . '" data-product-id="' . esc_attr( $product_id ) . '">
+                    <a class="mahamud-course-btn mahamud-btn-main mahamud-btn-cart" href="' . esc_url( $cart_url ) . '">Warenkorb ansehen</a>
+                </div>';
+    }
+
+    // Add to cart and redirect to cart page
+    $add_to_cart_url = add_query_arg( 'add-to-cart', $product_id, $cart_url );
+
+    return '<div class="mahamud-course-action-wrap" data-course-id="' . esc_attr( $course_id ) . '" data-product-id="' . esc_attr( $product_id ) . '">
+                <a class="mahamud-course-btn mahamud-btn-main mahamud-btn-add" href="' . esc_url( $add_to_cart_url ) . '">
+                    In den Warenkorb
+                </a>
+            </div>';
+}
+add_shortcode( 'tutor_course_action', 'mahamud_tutor_course_action_shortcode' );
+
+
+/**
+ * Button CSS
+ */
+function mahamud_tutor_course_action_assets() {
+    ?>
+    <style>
+        .mahamud-course-action-wrap{
+            width: 100%;
+        }
+
+        .mahamud-course-btn{
+            display:flex;
+            width:100%;
+            justify-content:center;
+            align-items:center;
+            padding:14px 20px;
+            border-radius:10px;
+            text-decoration:none !important;
+            font-size:15px;
+            font-weight:700;
+            line-height:1.2;
+            transition:all .25s ease;
+            box-sizing:border-box;
+            text-align:center;
+            background:#f2a33b;
+            color:#fff !important;
+            border:2px solid #f2a33b;
+            box-shadow:0 10px 24px rgba(242,163,59,.25);
+        }
+
+        .mahamud-course-btn:hover{
+            transform:translateY(-2px);
+            background:#dd8e18;
+            border-color:#dd8e18;
+            color:#fff !important;
+        }
+
+        .mahamud-btn-add,
+        .mahamud-btn-cart,
+        .mahamud-btn-learning{
+            background:#f2a33b;
+            color:#fff !important;
+            border:2px solid #f2a33b;
+            box-shadow:0 10px 24px rgba(242,163,59,.25);
+        }
+
+        .mahamud-btn-add:hover,
+        .mahamud-btn-cart:hover,
+        .mahamud-btn-learning:hover{
+            background:#dd8e18;
+            border-color:#dd8e18;
+            color:#fff !important;
+        }
+    </style>
+    <?php
+}
+add_action( 'wp_head', 'mahamud_tutor_course_action_assets' );
