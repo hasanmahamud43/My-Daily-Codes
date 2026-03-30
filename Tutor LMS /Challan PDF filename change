@@ -1,0 +1,36 @@
+add_filter( 'woo_invoice_file_name', 'mahamud_final_rechnung_filename', 9999, 3 );
+
+function mahamud_final_rechnung_filename( $filename, $template_type, $order_id ) {
+
+    if ( empty( $filename ) ) {
+        return $filename;
+    }
+
+    // .pdf temporarily remove
+    $ext = '';
+    if ( str_ends_with( strtolower( $filename ), '.pdf' ) ) {
+        $ext = '.pdf';
+        $filename = substr( $filename, 0, -4 );
+    }
+
+    // Split by dash
+    $parts = array_filter( array_map( 'trim', explode( '-', $filename ) ) );
+
+    $clean_parts = array();
+
+    foreach ( $parts as $part ) {
+        if ( strtolower( $part ) === 'invoice' || strtolower( $part ) === 'rechnung' ) {
+            continue;
+        }
+        $clean_parts[] = $part;
+    }
+
+    // Rebuild
+    $new_filename = 'Rechnung';
+
+    if ( ! empty( $clean_parts ) ) {
+        $new_filename .= '-' . implode( '-', $clean_parts );
+    }
+
+    return $new_filename . $ext;
+}
