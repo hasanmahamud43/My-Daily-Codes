@@ -1,0 +1,121 @@
+/**
+ * Course 100% complete হলে popup pending flag set করবে
+ */
+add_action('learndash_course_completed', function($data) {
+
+    if (empty($data['user']) || empty($data['course'])) {
+        return;
+    }
+
+    $user_id   = (int) $data['user']->ID;
+    $course_id = (int) $data['course']->ID;
+
+    // Extra safety: course সত্যিই completed কিনা check
+    if (!function_exists('learndash_course_completed') || !learndash_course_completed($user_id, $course_id)) {
+        return;
+    }
+
+    // আগে কখনও এই course-এর popup দেখানো হয়ে থাকলে আর set করবে না
+    $already_shown = get_user_meta($user_id, 'ld_popup_shown_course_' . $course_id, true);
+    if ($already_shown === '1') {
+        return;
+    }
+
+    // একবার দেখানোর জন্য pending course id save
+    update_user_meta($user_id, 'ld_popup_pending_course_id', $course_id);
+
+}, 20, 1);
+
+
+/**
+ * Frontend এ pending থাকলে popup show করবে
+ */
+add_action('wp_footer', function () {
+
+    if (is_admin() || !is_user_logged_in()) {
+        return;
+    }
+
+    $user_id   = get_current_user_id();
+    $course_id = (int) get_user_meta($user_id, 'ld_popup_pending_course_id', true);
+
+    if (!$course_id) {
+        return;
+    }
+
+    // Safety check: course আসলেই completed কিনা
+    if (!function_exists('learndash_course_completed') || !learndash_course_completed($user_id, $course_id)) {
+        delete_user_meta($user_id, 'ld_popup_pending_course_id');
+        return;
+    }
+
+    // Popup already shown হলে pending remove
+    $already_shown = get_user_meta($user_id, 'ld_popup_shown_course_' . $course_id, true);
+    if ($already_shown === '1') {
+        delete_user_meta($user_id, 'ld_popup_pending_course_id');
+        return;
+    }
+
+    // এখনই pending remove না করে JS success-এর পর remove করার জন্য mark করে রাখছি
+    ?>
+    <script>
+    (function () {
+        const POPUP_ID = 1587;
+        let shown = false;
+
+        function markShown() {
+            fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+                body: new URLSearchParams({
+                    action: 'ld_mark_popup_shown',
+                    course_id: '<?php echo esc_js($course_id); ?>'
+                })
+            });
+        }
+
+        function openPopup() {
+            if (shown) return;
+
+            if (
+                typeof elementorProFrontend !== 'undefined' &&
+                elementorProFrontend.modules &&
+                elementorProFrontend.modules.popup
+            ) {
+                elementorProFrontend.modules.popup.showPopup({ id: POPUP_ID });
+                shown = true;
+                markShown();
+            } else {
+                setTimeout(openPopup, 300);
+            }
+        }
+
+        window.addEventListener('load', function () {
+            setTimeout(openPopup, 1200);
+        });
+    })();
+    </script>
+    <?php
+}, 999);
+
+
+/**
+ * Popup shown mark করার AJAX
+ */
+add_action('wp_ajax_ld_mark_popup_shown', function () {
+    if (!is_user_logged_in()) {
+        wp_die();
+    }
+
+    $user_id   = get_current_user_id();
+    $course_id = isset($_POST['course_id']) ? absint($_POST['course_id']) : 0;
+
+    if (!$course_id) {
+        wp_die();
+    }
+
+    update_user_meta($user_id, 'ld_popup_shown_course_' . $course_id, '1');
+    delete_user_meta($user_id, 'ld_popup_pending_course_id');
+
+    wp_die();
+});
