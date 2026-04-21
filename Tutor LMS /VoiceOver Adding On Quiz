@@ -1,0 +1,163 @@
+VoiceOver ON|OFF - PHP
+
+
+
+// Add voiceover-active / voiceover-deactive class to <body> tag
+add_filter('body_class', function($classes) {
+    // Single course/lesson/quiz pages
+    if (is_singular(['courses', 'lesson', 'tutor_quiz'])) {
+
+        global $post;
+
+        // Get course ID (THIS IS REQUIRED FOR TUTOR LMS!)
+        if (function_exists('tutor_utils')) {
+            $course_id = tutor_utils()->get_course_id_by_content($post->ID);
+        } else {
+            $course_id = $post->ID; // fallback
+        }
+
+        // Read the meta key
+        $voice_toggle = get_post_meta($course_id, 'voiceover', true);
+
+        // Default off
+        if (empty($voice_toggle)) {
+            $voice_toggle = 'off';
+        }
+
+        // Add class
+        if ($voice_toggle === 'ON') {
+            $classes[] = 'voiceover-active';
+        } else {
+            $classes[] = 'voiceover-deactive';
+        }
+    }
+
+    return $classes;
+});
+ 
+
+
+
+
+
+Quiz VoiceOver JS
+
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=QV9hoK0s"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Speak function
+    function speakText(text) {
+        try {
+            if (window.responsiveVoice && text) {
+                responsiveVoice.cancel();
+                setTimeout(() => {
+                    responsiveVoice.speak(text, "UK English Female", { rate: 0.95 });
+                }, 200);
+            }
+        } catch (e) {
+            console.warn("Voice error:", e);
+        }
+    }
+
+    // Add voice buttons
+    function addVoiceButtons() {
+
+        if (!document.body.classList.contains('voiceover-active')) return;
+
+        // All questions
+        const questions = document.querySelectorAll('.quiz-attempt-single-question');
+        if (!questions.length) return;
+
+        questions.forEach(question => {
+
+            // Question title
+            const qTitle = question.querySelector('.quiz-question-title');
+            if (qTitle && !question.querySelector('.read-question-btn')) {
+
+                const qBtn = document.createElement("button");
+                qBtn.innerText = "🔊 Read Question";
+                qBtn.className = "read-question-btn";
+                qBtn.style.cssText = `
+                    background: #FF3A6F; color: #fff; border: none;
+                    border-radius: 10px; padding: 12px 22px;
+                    cursor: pointer; font-size: 16px; margin-top: 14px;
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+                    transition: all 0.25s ease;
+                `;
+
+                qBtn.addEventListener("mouseenter", () => {
+                    qBtn.style.background = "#FF3A6F";
+                    qBtn.style.transform = "scale(1.04)";
+                });
+                qBtn.addEventListener("mouseleave", () => {
+                    qBtn.style.background = "#FF3A6F";
+                    qBtn.style.transform = "scale(1)";
+                });
+
+                qBtn.addEventListener("click", e => {
+                    e.preventDefault();
+                    speakText(qTitle.innerText.trim());
+                });
+
+                qTitle.insertAdjacentElement("afterend", qBtn);
+            }
+
+            // Options
+            const options = question.querySelectorAll('.tutor-quiz-answer-single');
+            options.forEach(opt => {
+
+                const span = opt.querySelector('span.tutor-fs-6');
+                if (span && !opt.querySelector('.read-option-btn')) {
+
+                    opt.style.position = "relative";
+
+                    const btn = document.createElement("button");
+                    btn.innerText = "🔊";
+                    btn.className = "read-option-btn";
+                    btn.style.cssText = `
+                        position: absolute;
+                        right: 14px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        background: #FF3A6F;
+                        color: #fff;
+                        border: none;
+                        border-radius: 50%;
+                        padding: 9px 10px;
+                        cursor: pointer;
+                        font-size: 15px;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                        transition: all 0.25s ease;
+                    `;
+
+                    btn.addEventListener("mouseenter", () => {
+                        btn.style.background = "#FF3A6F";
+                        btn.style.transform = "translateY(-50%) scale(1.15)";
+                    });
+
+                    btn.addEventListener("mouseleave", () => {
+                        btn.style.background = "#FF3A6F";
+                        btn.style.transform = "translateY(-50%) scale(1)";
+                    });
+
+                    btn.addEventListener("click", e => {
+                        e.preventDefault();
+                        speakText(span.innerText.trim());
+                    });
+
+                    opt.appendChild(btn);
+                }
+            });
+        });
+    }
+
+    setTimeout(addVoiceButtons, 1200);
+
+    const observer = new MutationObserver(() => {
+        addVoiceButtons();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
