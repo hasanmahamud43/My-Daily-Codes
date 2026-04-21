@@ -1,0 +1,150 @@
+/**
+ * ==========================================
+ * STRICT BUNDLE MIX CONTROL
+ * ==========================================
+ */
+
+add_action('woocommerce_add_to_cart', 'strict_bundle_mix_control', 9999, 6);
+
+function strict_bundle_mix_control($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
+
+    if ( ! WC()->cart ) return;
+
+    $bundle_term_id = 2637;
+
+    $check_id = $variation_id
+        ? wp_get_post_parent_id($variation_id)
+        : $product_id;
+
+    $new_is_bundle = has_term($bundle_term_id, 'product_cat', $check_id);
+
+    $cart_has_bundle = false;
+    $cart_has_other  = false;
+
+    foreach (WC()->cart->get_cart() as $key => $item) {
+
+        if ($key === $cart_item_key) continue;
+
+        $existing_id = $item['variation_id']
+            ? wp_get_post_parent_id($item['variation_id'])
+            : $item['product_id'];
+
+        if (has_term($bundle_term_id, 'product_cat', $existing_id)) {
+            $cart_has_bundle = true;
+        } else {
+            $cart_has_other = true;
+        }
+    }
+
+    if (
+        ($cart_has_bundle && !$new_is_bundle) ||
+        ($cart_has_other && $new_is_bundle)
+    ) {
+
+        // Remove newly added item
+        WC()->cart->remove_cart_item($cart_item_key);
+
+        // Set session flag
+        WC()->session->set('bundle_removed', true);
+    }
+}
+
+
+/**
+ * ==========================================
+ * PASS REMOVE FLAG TO AJAX RESPONSE
+ * ==========================================
+ */
+
+add_filter('woocommerce_add_to_cart_fragments', function($fragments){
+
+    if (WC()->session->get('bundle_removed')) {
+
+        $fragments['bundle_removed_flag'] = 'yes';
+
+        WC()->session->__unset('bundle_removed');
+    }
+
+    return $fragments;
+});
+
+
+/**
+ * ==========================================
+ * POPUP UI + JS
+ * ==========================================
+ */
+
+add_action('wp_footer', function(){
+?>
+<style>
+#bundleOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999999;
+}
+#bundleModal{
+    background:#fff;
+    width:420px;
+    max-width:92%;
+    padding:35px;
+    border-radius:16px;
+    text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+#bundleModal h3{
+    font-size:22px;
+    color:#dc2626;
+    margin-bottom:12px;
+}
+#bundleClose{
+    background:#111;
+    color:#fff;
+    padding:10px 22px;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+
+<div id="bundleOverlay">
+    <div id="bundleModal">
+        <h3>⚠ Cart Restriction</h3>
+        <p>You cannot mix Bundle products with other products in your cart.</p>
+        <div id="bundleClose">OK</div>
+    </div>
+</div>
+
+<script>
+jQuery(function($){
+
+    function showModal(){
+        $('#bundleOverlay').css('display','flex');
+    }
+
+    function hideModal(){
+        $('#bundleOverlay').fadeOut(200);
+    }
+
+    $('#bundleClose, #bundleOverlay').on('click', function(e){
+        if(e.target === this || e.target.id === 'bundleClose'){
+            hideModal();
+        }
+    });
+
+    $(document.body).on('added_to_cart', function(event, fragments){
+
+        // Check our custom fragment flag
+        if(fragments && fragments.bundle_removed_flag === 'yes'){
+            showModal();
+        }
+
+    });
+
+});
+</script>
+<?php
+});
