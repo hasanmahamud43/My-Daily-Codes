@@ -1,0 +1,230 @@
+<!-- ResponsiveVoice JS -->
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=iwkBt9pY"></script>
+
+<style>
+.listen-question-btn {
+    background: #ff5722;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.listen-question-btn:hover {
+    background: #e64a19;
+    transform: scale(1.05);
+}
+
+/* Option button style */
+.listen-option-btn {
+    background: #4caf50;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    font-size: 20px;
+    line-height: 1;
+}
+.listen-option-btn:hover {
+    background: #388e3c;
+    transform: scale(1.25);
+}
+
+/* Fallback if emoji fails */
+.listen-option-btn::before {
+    content: "🔊";
+    font-size: 20px;
+    line-height: 1;
+}
+
+@media (max-width: 600px) {
+    .listen-question-btn {
+        width: 100%;
+        font-size: 16px;
+    }
+    .listen-option-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 22px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (!window.voiceoverEnabled) return;
+    if (!document.body.classList.contains('learndash-cpt-sfwd-quiz')) return;
+
+    const questions = document.querySelectorAll('.wpProQuiz_question_text');
+    questions.forEach(q => {
+        const qText = q.textContent.trim();
+
+        // 🔊 Question listen button
+        const qBtn = document.createElement('button');
+        qBtn.className = 'listen-question-btn';
+        qBtn.innerHTML = '🔊 <span>Listen Question</span>';
+        qBtn.onclick = () => {
+            if (window.responsiveVoice)
+                responsiveVoice.speak(qText, "UK English Female", { rate: 0.95 });
+        };
+        q.appendChild(qBtn);
+
+        // 🔊 Option listen buttons
+        const options = q.closest('.wpProQuiz_question').querySelectorAll('.wpProQuiz_questionListItem');
+        options.forEach(opt => {
+            const label = opt.querySelector('label');
+            if (!label) return;
+            const oText = label.innerText.trim();
+            const oBtn = document.createElement('button');
+            oBtn.className = 'listen-option-btn';
+            oBtn.title = "Listen option";
+            oBtn.onclick = () => {
+                if (window.responsiveVoice)
+                    responsiveVoice.speak(oText, "UK English Female", { rate: 0.95 });
+            };
+            opt.appendChild(oBtn);
+        });
+    });
+});
+</script>
+
+
+
+
+
+NEW
+—————————————
+
+<!-- ResponsiveVoice JS -->
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=iwkBt9pY"></script>
+
+<style>
+/* Question Listen Button */
+.listen-question-btn {
+    background: #ff5722;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.listen-question-btn:hover {
+    background: #e64a19;
+    transform: scale(1.05);
+}
+
+/* Option buttons flex layout */
+.wpProQuiz_questionListItem label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* text left, button right */
+    gap: 6px;
+    margin: 0;
+    padding: 2px 0; /* padding কমানো */
+}
+
+/* Option Listen Button */
+.listen-option-btn {
+    background: #4caf50;
+    color: #fff;
+    width: 28px;  /* ছোট করা */
+    height: 28px; /* ছোট করা */
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px; /* ছোট করা */
+    line-height: 1;
+    flex-shrink: 0;
+}
+.listen-option-btn:hover {
+    background: #388e3c;
+    transform: scale(1.2); /* hover scale একটু কমানো */
+}
+
+/* Fallback emoji */
+.listen-option-btn::before {
+    content: "🔊";
+    font-size: 16px; /* ছোট করা */
+    line-height: 1;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .listen-question-btn {
+        width: 100%;
+        font-size: 16px;
+    }
+    .listen-option-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (!window.voiceoverEnabled) return;
+    if (!document.body.classList.contains('learndash-cpt-sfwd-quiz')) return;
+
+    const questions = document.querySelectorAll('.wpProQuiz_question_text');
+    questions.forEach(q => {
+        const qText = q.textContent.trim();
+
+        // Question Listen Button
+        const qBtn = document.createElement('button');
+        qBtn.className = 'listen-question-btn';
+        qBtn.innerHTML = '🔊 <span>Listen Question</span>';
+        qBtn.type = "button";
+        qBtn.onclick = () => {
+            if (window.responsiveVoice) {
+                responsiveVoice.cancel();
+                responsiveVoice.speak(qText, "UK English Female", { rate: 0.95 });
+            }
+        };
+        q.appendChild(qBtn);
+
+        // Option Listen Buttons
+        const options = q.closest('.wpProQuiz_question').querySelectorAll('.wpProQuiz_questionListItem');
+        options.forEach(opt => {
+            const label = opt.querySelector('label');
+            if (!label) return;
+            const oText = label.innerText.trim();
+
+            const oBtn = document.createElement('button');
+            oBtn.className = 'listen-option-btn';
+            oBtn.type = "button";
+            oBtn.title = "Listen option";
+            oBtn.onclick = (e) => {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                if (window.responsiveVoice) {
+                    responsiveVoice.cancel();
+                    responsiveVoice.speak(oText, "UK English Female", { rate: 0.95 });
+                }
+            };
+
+            label.appendChild(oBtn);
+        });
+    });
+});
+</script>
